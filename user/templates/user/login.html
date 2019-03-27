@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}
+    我的网站|登录
+{% endblock %}
+
+{% block nav_home_active %}active {% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-4 col-xs-offset-4">
+                {% if not user.is_authenticated %}
+                    <div class="panel panel-default">
+                    <div class="panel-heading" align="center">
+                        登录
+                    </div>
+                    <div class="panel-body">
+                        <form action="" method="post">
+                            {% for field in login_form %}
+                                <label for="field.id_for_label">{{ field.label }}</label>
+                                {{ field }}
+                                <p class="text-danger">{{ field.errors.as_text }}</p>
+
+                            {% endfor %}
+                            <span class="pull-left text-danger">{{ login_form.non_field_errors }}</span>
+                            <div class="clearfix"></div>
+                            <a href="{% url 'forgot_password' %}" class="pull-left">忘记密码</a>
+                            <!--<span class="pull-left text-danger">{{ login_form.captcha.errors }}</span>-->
+                            <input type="submit"value="登录" class="btn btn-primary pull-right">
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                    <span>已登录，跳转到首页...</span>
+                    <script type="text/javascript">
+                        window.location.href='/';
+                    </script>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+{% block script_extends %}
+    <script type="text/javascript">
+        $(function(){
+            $('.captcha').css({
+                'cursor':'pointer'
+            })
+            //ajax刷新
+            $('.captcha').click(function(){
+                console.log('click');
+                $.getJSON("/captcha/refresh/",
+                    function(result){
+                        $('.captcha').attr('src',result['image_url']);
+                        $('#id_captcha_0').val(result['key'])
+                    });
+            });
+            $('#id_captcha_1').blur(function(){
+                //id_captcha_1为验证码输入框的id,当该输入框失去焦点时触发函数
+                json_data={
+                    'response':$('#id_captcha_1').val(),//获取输入框的数值
+                    'hashkey':$('#id_captcha_0').val()//获取隐藏字段id_captcha_0的值
+                }
+                $.getJSON('/ajax_val',json_data,function(data){
+                    $('#captcha_status').remove()
+                    if(data['status']){
+                        $('#id_captcha_1').after('<span id="captcha_status">*验证码正确</span>')
+                    }
+                    else{
+                        $('#id_captcha_1').after('<span id="captcha_status">*验证码正确</span>')
+                    }
+                });
+            });
+        })
+    </script>
+{% endblock %}

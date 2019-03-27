@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}
+    我的网站 | 首页
+{% endblock %}
+
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'home.css' %}">
+    <script src="http://cdn.hcharts.cn/highcharts/highcharts.js"></script>
+    <script src="http://cdn.hcharts.cn/highcharts/modules/exporting.js"></script>
+{% endblock %}
+
+{% block nav_home_active %}active{% endblock %}{#在home页面中时可看到导航条的home背景为黑色#}
+{% block content %}
+    <h3 class="home-content">欢迎访问我的网站！</h3>
+
+    <div id="container" ></div>
+    <script>
+        // 图表配置
+
+        var options = {
+            chart: { type: 'line'  },             //指定图表的类型，默认是折线图（line）
+            title: {text: null  },               // 标题
+            xAxis: {
+                categories:{{ dates|safe }},  // x 轴分类
+                tickmarkPlacement:'on',
+                title:{ text:'前7日阅读量变化'}
+            },
+            yAxis: {
+                title: { text: null  },               // y 轴标题
+                labels:{ enabled:false },
+                gridLineDashStyle:'Dash',
+            },
+            series: [{
+                name: '阅读量',
+                data: {{ read_nums }}
+            }],
+            plotOptions:{
+                line:{
+                    dataLabels:{ enabled:true  }
+                }
+            },
+            legend:{ enabled:false },
+            credits:{ enabled:false }//版权信息
+
+        };
+        // 图表初始化函数
+        var chart = Highcharts.chart('container', options);
+    </script>
+    <!--今天24小时内博客-->
+    <div class="hot-data">
+        <h3 class="">今天热门点击</h3>
+        <ul>
+            {% for hot_data in today_hot_data %}
+                <li>
+                    <a href="{% url 'blog_detail' hot_data.content_object.pk %}">
+                        {{ hot_data.object_id }}{{ hot_data.content_object.title }}({{ hot_data.read_num }})
+                    </a>
+                </li>
+            {% empty %}
+                <li>暂无热门博客</li>
+            {% endfor %}
+        </ul>
+        <h3>昨天热门点击</h3>
+        <ul>
+            {% for hot_data in yesterday_hot_data %}
+                <li>
+                    <a href="{% url 'blog_detail' hot_data.content_object.pk %}">
+                        {{ hot_data.content_object.title }}({{ hot_data.read_num }})
+                    </a>
+                </li>
+            {% empty %}
+                <li>暂无热门博客</li>
+            {% endfor %}
+        </ul>
+        <h3>7天内热门点击</h3>
+        <ul>
+            {% for hot_blog in hot_blogs_for_seven_days %}
+                <li>
+                    <a href="{% url 'blog_detail' hot_blog.id %}">
+                        {{ hot_blog.id }}.{{ hot_blog.title }}({{ hot_blog.read_num_sum }})
+                    </a>
+                </li>
+            {% empty %}
+                <li>暂无热门博客</li>
+            {% endfor %}
+        </ul>
+        <h3>30天内热门点击</h3>
+        <ul>
+            {% for hot_blog in hot_blogs_for_thirty_days %}
+                <li>
+                    <a href="{% url 'blog_detail' hot_blog.id %}">
+                        {{ hot_blog.title }}({{ hot_blog.read_num_sum }})
+                    </a>
+                </li>
+            {% empty %}
+                <li>暂无热门博客</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 col-md-offset-4">
+                <form method="post"action="/get_express/" style="margin-left:25%;">
+                    <input name ="company" type="text" placeholder="company"><br>
+                    <input name="code"type="text" placeholder="expresscode"><br>
+                    <button type="submit" id="btn" style="margin-left:25%;">提交</button>
+                </form>
+                <ul class="express-info">
+                    {% for  x in express_data %}
+                        <li>{{ x.time }} {{ x.context }}</li>
+                    {% empty %}
+                        <p>--暂无快递信息--</p>
+                    {% endfor %}
+                    <!--{{ info.message }}
+                    {{ info.status }}
+                    {{ info }}
+                    {{ info.data }}-->
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div style="margin-top:50px;">
+
+    </div>
+
+{% endblock %}

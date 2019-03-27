@@ -1,0 +1,258 @@
+{% load staticfiles %}{#为加载静态文件为使用#}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'base.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap-3.3.7/css/bootstrap.min.css' %}">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-3.3.7/js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/layer.js' %}"></script>
+    {% block header_extends %}{% endblock %}
+</head>
+<body>
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation"><!--导航栏-->
+        <div class="container-fluid"><!--容器-->
+            <div class="navbar-header">
+                <a  class="navbar-brand" href="{% url 'home' %}">个人博客网站</a>
+                <!--缩小时显示下拉列表-->
+                <button class="navbar-toggle collapsed" type="button" data-toggle="collapse"data-target="#example1"aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span><!--对应三个横线-->
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse" id="example1">
+                <ul class="nav navbar-nav">
+                    <li class="{% block nav_home_active %}{% endblock %}">
+                        <a href="{% url 'home' %}">首页</a>
+                    </li>
+                    <li class="{% block nav_blog_active %}{% endblock %}">
+                        <a href="{% url 'blog_list' %}">博客</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'music' %}">music</a>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-haspopup="true" aria-expanded="false">音乐 <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu" style="width:400px;">
+                            <ol id="m-list" style="padding-left:50px;"></ol>
+                                <div>
+                                    正在播放:   <strong id="rmusic"></strong>
+                                </div>
+                                <audio  id="audio" controls></audio>
+                                <div class="btn-group" id="ctrl-area">
+                                    <button id="btn-play" class="btn btn-success">
+                                        播放
+                                    </button>
+                                    <button id="btn-pre" class="btn btn-success">
+                                        上一首
+                                    </button>
+                                    <button id="btn-next" class="btn btn-success">
+                                        下一首
+                                    </button>
+                                    <button id="btn-pause" class="btn btn-success">
+                                        暂停
+                                    </button>
+                                    <div class="btn-group">
+                                        <button type="button" id="music_button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                                            播放模式    <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li>
+                                                <a href="#" id="btn-loop">
+                                                    单曲循环
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#" id="btn-order">
+                                                    顺序播放
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#" id="btn-random">
+                                                    随机播放
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                        </ul>
+                    </li>
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right">
+                    {% if not user.is_authenticated %} <!--未登录状态-->
+                        <li><a href="{% url 'login' %}?from={{ request.get_full_path }}">登录</a></li>
+                        <li><a href="{% url 'register' %}?from={{ request.get_full_path }}">注册</a></li>
+                    {% else %}<!--登录状态-->
+                        <li class="dropdown"><!--下拉列表显示用户user信息-->
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                               role="button" aria-haspopup="true" aria-expanded="false">
+                                {% if user.has_nickname %}
+                                    {{ user.username }}({{ user.get_nickname }})
+                                {% else %}
+                                    {{ user.username }}
+                                {% endif %}
+
+                                <span class="caret"><!--三角符号--></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{% url 'user_info' %}">个人资料</a></li>
+                                {% if user.is_staff or user.is_superuser %}
+                                    <li><a href="{% url 'admin:index' %}">后台管理</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'change_password' %}?from={{ request.get_full_path }}">修改密码</a></li>
+                                <li><a href="{% url 'logout' %}?from={{ request.get_full_path }}">退出</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="#">Separated link</a></li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+    {% block script_extends %}
+        <script type="text/javascript">
+        $(function(){
+            //播放器
+            var player={
+                //歌曲路径
+                path:'/static/media/music/',
+
+                //歌曲数据
+                data:null,
+                //当前播放歌曲的索引
+                currentIndex : -1,
+                //播放器元素jQuery
+                $audio : $('audio'),
+                //歌曲列表
+                $mList: $('#m-list'),
+                //正在播放的歌曲
+                $rmusic : $('#rmusic'),
+                //初始化数据
+                init : function(){
+                    player.data=['华晨宇-烟火里的尘埃.mp3','曾惜-讲真的.mp3','赵鑫-许多年以后.mp3','杨坤-答案.mp3','金玟岐-再见.mp3','周杰伦-青花瓷.mp3','周杰伦-稻香.mp3','周杰伦-菊花台.mp3','汪峰-春天里.flac','王菲-匆匆那年.flac','羽泉-奔跑.flac'];
+                    var mhtml='';
+                    var len=player.data.length;
+                    for(var i=0;i<len;i++){
+                        mhtml +='<li><a index="' + i + '">' + player.data[i] +'</a></li>';
+                    }
+                    player.$mList.html(mhtml);
+                },
+
+                //就绪
+                ready : function(){
+                    player.audio=player.$audio.get(0);
+
+                    $('#ctrl-area').on('click','button',function(){
+                        player.$rmusic.html(player.data[player.currentIndex]);
+                    });
+
+                    $('#btn-play').click(function(){
+                        player.audio.play();
+                        if (player.currentIndex ==-1){
+                            $('#btn-next').click();
+                        }
+                    });
+                    //暂停
+                     $('#btn-pause').click(function(){
+                        player.audio.pause();
+
+                    });
+
+                    //下一曲
+                      $('#btn-next').click(function(){
+                        if(player.currentIndex== -1){
+                            player.currentIndex= 0;
+                        }else if (player.currentIndex==(player.data.length -1))
+                        {
+                            player.currentIndex=0;
+                        }
+                        else{
+                            player.currentIndex++;
+
+                        }
+                        console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.src=player.path+player.data[player.currentIndex];
+                        player.audio.play();
+
+                    });
+                    //上一曲
+                      $('#btn-pre').click(function(){
+                        if(player.currentIndex==-1){
+                            player.currentIndex=0;
+                        }else if (player.currentIndex==(player.data.length -1))
+                        {
+                            player.currentIndex=0;
+                        }
+                        else{
+                            player.currentIndex --;
+
+                        }
+                        //console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.src=player.path+player.data[player.currentIndex];
+                        player.audio.play();
+
+                    });
+
+                    //单曲循环
+                    $('#btn-loop').click(function(){
+                        console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.onended= function(){
+                            player.audio.load();
+                            player.audio.play();
+                        };
+                    });
+                     //顺序循环
+                    $('#btn-order').click(function(){
+                        console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.onended= function(){
+                            $('#btn-next').click();
+                        };
+                    });
+                    //随机循环
+                    $('#btn-random').click(function(){
+                        //console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.onended= function(){
+                            var i =parseInt((player.data.length -1)* Math.random());
+                            playByMe(i);
+                        };
+                    });
+
+                    //播放指定歌曲
+                    function playByMe(i){
+                        console.log("index:",i);
+                        player.audio.src=player.path + player.data[i];
+                        player.audio.play();
+                        player.currentIndex = i;
+                        player.$rmusic.html(player.data[player.currentIndex]);
+
+                    }
+
+                    //歌曲被点击
+                    $('#m-list a').click(function(){
+                        playByMe($(this).attr('index'));
+                    });
+                }
+            };
+
+            player.init();
+            player.ready();
+        });
+    </script>
+
+    {% endblock %}
+</body>
+</html>

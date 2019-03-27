@@ -1,0 +1,230 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music</title>
+    <link rel="stylesheet" href="{% static 'bootstrap-3.3.7/css/bootstrap.min.css' %}">
+    <script type="text/javascript" src="{% static 'jquery-1.12.4.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-3.3.7/js/bootstrap.min.js' %}"></script>
+
+</head>
+<body>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-4">
+                <ul id="myTab" class="nav nav-tabs">
+	                <li class="active"><a href="#home" data-toggle="tab">
+		                菜鸟教程</a>
+                    </li>
+                    <li><a href="#ios" data-toggle="tab">iOS</a></li>
+                    <li class="dropdown">
+		                <a href="#" id="myTabDrop1" class="dropdown-toggle"
+		                    data-toggle="dropdown">
+			                Java <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
+                            <li><a href="#jmeter" tabindex="-1" data-toggle="tab">jmeter</a></li>
+                            <li><a href="#ejb" tabindex="-1" data-toggle="tab">ejb</a></li>
+                        </ul>
+	                </li>
+                </ul>
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane fade in active" id="home">
+                        <p>菜鸟教程是一个提供最新的web技术站点，本站免费提供了建站相关的技术文档，帮助广大web技术爱好者快速入门并建立自己的网站。菜鸟先飞早入行——学的不仅是技术，更是梦想。</p>
+                    </div>
+                    <div class="tab-pane fade" id="ios">
+                        <p>iOS 是一个由苹果公司开发和发布的手机操作系统。最初是于 2007 年首次发布 iPhone、iPod Touch 和 Apple
+                            TV。iOS 派生自 OS X，它们共享 Darwin 基础。OS X 操作系统是用在苹果电脑上，iOS 是苹果的移动版本。</p>
+                    </div>
+                    <div class="tab-pane fade" id="jmeter">
+                        <p>jMeter 是一款开源的测试软件。它是 100% 纯 Java 应用程序，用于负载和性能测试。</p>
+                    </div>
+                    <div class="tab-pane fade" id="ejb">
+                        <p>Enterprise Java Beans（EJB）是一个创建高度可扩展性和强大企业级应用程序的开发架构，部署在兼容应用程序服务器（比如 JBOSS、Web Logic 等）的 J2EE 上。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <ol id="m-list">
+
+                </ol>
+            </div>
+            <div class="col-md-4">
+                <div>
+                    正在播放:   <strong id="rmusic"></strong>
+                </div>
+                <audio  id="audio" controls></audio>
+                <div class="btn-group" id="ctrl-area">
+                    <button id="btn-play" class="btn btn-success">
+                        播放
+                    </button>
+                    <button id="btn-pre" class="btn btn-success">
+                        上一首
+                    </button>
+                     <button id="btn-next" class="btn btn-success">
+                        下一首
+                    </button>
+                     <button id="btn-pause" class="btn btn-success">
+                        暂停
+                    </button>
+
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                            播放模式    <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li>
+                                <a href="#" id="btn-loop">
+                                    单曲循环
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" id="btn-order">
+                                    顺序播放
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" id="btn-random">
+                                    随机播放
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function(){
+            //播放器
+            var player={
+                //歌曲路径
+                path:'/static/media/music/',
+
+                //歌曲数据
+                data:null,
+                //当前播放歌曲的索引
+                currentIndex : -1,
+                //播放器元素jQuery
+                $audio : $('audio'),
+                //歌曲列表
+                $mList: $('#m-list'),
+                //正在播放的歌曲
+                $rmusic : $('#rmusic'),
+                //初始化数据
+                init : function(){
+                    player.data=['华晨宇-烟火里的尘埃.mp3','曾惜-讲真的.mp3','赵鑫-许多年以后.mp3','杨坤-答案.mp3','金玟岐-再见.mp3','周杰伦-青花瓷.mp3','周杰伦-稻香.mp3','周杰伦-菊花台.mp3','汪峰-春天里.flac','王菲-匆匆那年.flac','羽泉-奔跑.flac'];
+                    var mhtml='';
+                    var len=player.data.length;
+                    for(var i=0;i<len;i++){
+                        mhtml +='<li><a index="' + i + '">' + player.data[i] +'</a></li>';
+                    }
+                    player.$mList.html(mhtml);
+                },
+
+                //就绪
+                ready : function(){
+                    player.audio=player.$audio.get(0);
+
+                    $('#ctrl-area').on('click','button',function(){
+                        player.$rmusic.html(player.data[player.currentIndex]);
+                    });
+
+                    $('#btn-play').click(function(){
+                        player.audio.play();
+                        if (player.currentIndex ==-1){
+                            $('#btn-next').click();
+                        }
+                    });
+                    //暂停
+                     $('#btn-pause').click(function(){
+                        player.audio.pause();
+
+                    });
+
+                    //下一曲
+                      $('#btn-next').click(function(){
+                        if(player.currentIndex== -1){
+                            player.currentIndex= 0;
+                        }else if (player.currentIndex==(player.data.length -1))
+                        {
+                            player.currentIndex=0;
+                        }
+                        else{
+                            player.currentIndex++;
+
+                        }
+                        console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.src=player.path+player.data[player.currentIndex];
+                        player.audio.play();
+
+                    });
+                    //上一曲
+                      $('#btn-pre').click(function(){
+                        if(player.currentIndex==-1){
+                            player.currentIndex=0;
+                        }else if (player.currentIndex==(player.data.length -1))
+                        {
+                            player.currentIndex=0;
+                        }
+                        else{
+                            player.currentIndex --;
+
+                        }
+                        //console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.src=player.path+player.data[player.currentIndex];
+                        player.audio.play();
+
+                    });
+                    //单曲循环
+                    $('#btn-loop').click(function(){
+                        console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.onended= function(){
+                            player.audio.load();
+                            player.audio.play();
+                        };
+                    });
+                     //顺序循环
+                    $('#btn-order').click(function(){
+                        console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.onended= function(){
+                            $('#btn-next').click();
+                        };
+                    });
+                    //随机循环
+                    $('#btn-random').click(function(){
+                        //console.log("player.currentIndex : "+ player.currentIndex);
+                        player.audio.onended= function(){
+                            var i =parseInt((player.data.length -1)* Math.random());
+                            playByMe(i);
+                        };
+                    });
+
+                    //播放指定歌曲
+                    function playByMe(i){
+                        console.log("index:",i);
+                        player.audio.src=player.path + player.data[i];
+                        player.audio.play();
+                        player.currentIndex = i;
+                        player.$rmusic.html(player.data[player.currentIndex]);
+
+                    }
+
+                    //歌曲被点击
+                    $('#m-list a').click(function(){
+                        playByMe($(this).attr('index'));
+                    });
+                }
+            };
+
+            player.init();
+            player.ready();
+        });
+    </script>
+</body>
+</html>
